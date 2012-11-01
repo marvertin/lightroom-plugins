@@ -96,10 +96,10 @@ function Update.main()
         end
     end, finale=function( call )
         background:continue()
-        app:log( "^1 changed.", str:plural( call.nChanged, "photo", true ) )
-        app:log( "^1 unchanged.", str:plural( call.nUnchanged, "photo", true ) )
-        app:log( "^1 already up to date.", str:plural( call.nAlreadyUpToDate, "photo", true ) )
-        app:log( "^1 missing.", str:plural( call.nMissing, "photo", true ) )
+        app:log( "^1 xchanged.", str:plural( call.nChanged, "photo", true ) )
+        app:log( "^1 xunchanged.", str:plural( call.nUnchanged, "photo", true ) )
+        app:log( "^1 xalready up to date.", str:plural( call.nAlreadyUpToDate, "photo", true ) )
+        app:log( "^1 xmissing.", str:plural( call.nMissing, "photo", true ) )
     end } )
 end
 

@@ -65,7 +65,6 @@ _G.Preferences = require( 'System/Preferences' )
 _G.XmlRpc = require( 'Communication/XmlRpc' )
 _G.Common = require( 'Common' )
 _G.ExtendedBackground = require( 'ExtendedBackground' )
-_G.ExtendedUpdater = require( 'ExtendedUpdater' )
 _G.ScrollView = require( 'Gui/ScrollView' )
 _G.Reload = require( 'System/Reload' )
 -- @9/Sep/2012 18:20 only used for new Write feature: ###3 - update all features to use exif-tool external-app object.
@@ -78,7 +77,6 @@ _G.xmp = Xmp:new()
 _G.reload = Reload:new()
 _G.xml = Xml:new()
 _G.background = ExtendedBackground:new() -- name is fixed - this is how other things determine whether there is a potential for background activity.
-_G.upd = ExtendedUpdater:new()
 
 
 

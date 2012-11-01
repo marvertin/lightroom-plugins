@@ -63,8 +63,6 @@ function ExtendedObjectFactory:newObject( class, ... )
             return ExtendedExport:newDialog( ... )
         elseif class == 'Export' then
             return ExtendedExport:newExport( ... )
-        --elseif class == 'Updater' then
-        --    return ExtendedUpdater:new( ... )
         end
     end
     return ObjectFactory.newObject( self, class, ... )
