@@ -1,0 +1,22 @@
+Plug-in error log for plug-in at: C:\vyvoj\LightRoom\LoadGpsData.lrplugin
+
+**** Error 1
+
+An error occurred while attempting to run one of the plug-in’s scripts.
+...om\LoadGpsData.lrplugin\Framework/System/Require.lua:2018: 'require' can't open script 'ExtendedManager.lua': can't find the file
+
+**** Error 2
+
+An error occurred while attempting to start the plugin.
+...om\LoadGpsData.lrplugin\Framework/System/Require.lua:2018: 'require' can't open script 'ExtendedManager.lua': can't find the file
+
+**** Error 3
+
+The plug-in’s metadata provider description could not be read.
+...om\LoadGpsData.lrplugin\Framework/System/Require.lua:2018: 'require' can't open script 'ExtendedManager.lua': can't find the file
+
+**** Error 4
+
+Could not read the metadata spec from this plug-in.
+...om\LoadGpsData.lrplugin\Framework/System/Require.lua:2018: 'require' can't open script 'ExtendedManager.lua': can't find the file
+
