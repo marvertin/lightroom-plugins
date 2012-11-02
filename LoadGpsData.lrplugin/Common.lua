@@ -387,7 +387,8 @@ function Common.updatePhotos( call, new )
             pcallStatus, nNewOrErrMsg = LrTasks.pcall( Common.update1Photo, photo, call, new )
             if pcallStatus then
                 nNew = nNewOrErrMsg
-                progressScope:setCaption( str:fmt( "^1 discovered...", str:plural( i, "new item" ) ) )
+                progressScope:setCaption( str:fmt( "(nast=^1 prep=^2 utod=^3) (jenkat=^4 - nicnic=^5) / ^6 ...", call.nNastavujeSe, call.nPrepisujeSe, call.nAktualni, call.nJenKatalog, call.nNicNic, nToDo) )          
+        
             else
                 errm = nNewOrErrMsg
                 app:logError( "Unable to update metadata for " .. photoPath .. ", error message: " .. str:to( errm ) ) -- catalog read-access not required @3.0.
