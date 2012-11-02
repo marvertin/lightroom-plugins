@@ -78,6 +78,16 @@ function Update.main()
         }
         local new = {}
         local nNew
+
+
+
+
+         call.nNastavujeSe = 0           
+         call.nAktualni = 0 
+         call.nPrepisujeSe = 0           
+         call.nJenKatalog = 0           
+         call.nNicNic = 0           
+        
         call.nChanged = 0
         call.nUnchanged = 0
         call.nAlreadyUpToDate = 0
@@ -85,14 +95,10 @@ function Update.main()
         call.totalNew = 0
         if #call.photos > 1 then
             app:log( "^1 to do.", str:plural( #call.photos, "photo" ) )
-            app:logInfo("Aktualizuji vice")
             Common.updatePhotos( call, new )
-            app:logInfo("Aktualizovano vice")
             nNew = tab:countItems( new )
         else
-            app:logInfo("Aktualizuji jednu")
             nNew = Common.updatePhoto( call.photos[1], call, new )
-            app:logInfo("Aktualizovana jedna")
         end
     end, finale=function( call )
         background:continue()
@@ -100,6 +106,13 @@ function Update.main()
         app:log( "^1 xunchanged.", str:plural( call.nUnchanged, "photo", true ) )
         app:log( "^1 xalready up to date.", str:plural( call.nAlreadyUpToDate, "photo", true ) )
         app:log( "^1 xmissing.", str:plural( call.nMissing, "photo", true ) )
+
+        app:log( "^1 fotek - nastavovany souradnice.", call.nNastavujeSe )
+        app:log( "^1 fotek - prepisovany souradnice jinymi.", call.nPrepisujeSe )
+        app:log( "^1 fotek - souradnise jsou aktualni.", call.nAktualni )
+        app:log( "^1 fotek - ani v katalogu ani ve fotce.", call.nNicNic )
+        app:log( "^1 fotek - v katalogu souradnice jsou, ve fotce ne.", call.nJenKatalog )
+
     end } )
 end
 

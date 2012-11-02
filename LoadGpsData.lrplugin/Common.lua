@@ -12,87 +12,6 @@ local Common, dbg = Object.register( "Common" )
 
 
 
---- Determine if metadatabase item should be shown, given filter.
---
---  @param      t       (table, required) metadatabase item formed into a table.
---  @param      filter  (table, required) could easily have been optional, but is being checked externally.
--- 
-function Common.isToShow( t, filter )
-    if not filter.showHidden and t.hide then
-        return false
-    end
-    if not filter.field then
-        return true
-    end
-    local show
-    if filter.field == 'ID' then
-        show = ( t.id:find( filter.value, 1, not filter.regex ) ~= nil )
-    elseif filter.field == 'Name' then
-        show = ( t.name:find( filter.value, 1, not filter.regex ) ~= nil )
-    elseif filter.field == 'Included' then
-        show = t.include
-    elseif filter.field == 'Interesting' then
-        -- band-aid for string/num compare error.
-        local fv
-        local enc
-        if type( filter.value ) == 'string' then
-            fv = tonumber( filter.value )
-        end
-        if type( t.encounters ) == 'string' then
-            enc = tonumber( t.encounters )
-        end
-        if enc ~= nil and fv ~= nil then
-            show = ( enc > fv )
-        else
-            return false
-        end
-    elseif filter.field == 'New' then
-        show = t.new
-    else
-        app:setPref( 'filterField', "No Filter" )
-    end
-    if filter.invert then
-        return not show
-    else
-        return show
-    end
-end
-
-
-
---- Set the include flag for existing exif pref.
---
---  @param      id      (string, required) tag id
---  @param      value   (boolean, required) value to set.
---
---  @usage      presently just sets the global pref for include member, and clears the hide field in case it would otherwise be set too.
---  @usage      does not set property being displayed - that must be assured externally.
---
-function Common.setInclude( id, value )
-    Common.updateExifPrefField( id, 'include', value )
-    if value then
-        Common.updateExifPrefField( id, 'hide', false )
-    end
-end
-
-
-
---- Set the hide flag for existing exif pref.
---
---  @param      id      (string, required) tag id
---  @param      value   (boolean, required) value to set.
---
---  @usage      presently just sets the global pref for hide member, and clears the include field in case it would otherwise be set too.
---  @usage      does not set property being displayed - that must be assured externally.
---
-function Common.setHide( id, value )
-    Common.updateExifPrefField( id, 'hide', value )
-    if value then
-        Common.updateExifPrefField( id, 'include', false )
-    end
-end
-
-
 
 --  Sort array of id keys by encounter count (most encounters first).
 --
@@ -123,243 +42,6 @@ function Common._sortByName( keys, tbl )
 end
 
 
-
---  Sort metadatabase items according to prefs, filter while at it.
---
---  @return     iterator    (function) that returns pairs:
---              <br>id      (string) db id
---              <br>item    (table) metadatabase item table corresponding to id (constructed from pref elems).
---
-function Common.sortedPairs( filter )
-
-    local tbl = {}
-    local t
-    local seen = {}
-    local keys = {}
-    local sortField = app:getPref( 'sortField' )
-
-    local p1, p2, id    
-
-    for n, v in app:getGlobalPrefPairs() do
-        repeat
-            p1, p2 = n:find( "{emid}_", 1, true )
-            if p1 == nil then
-                break
-            end
-            id = n:sub( p2 + 1 )
-            if seen[id] then
-                break
-            else
-                seen[id] = true
-            end
-            local t = Common.getExifPrefTable( id )
-            if not t then
-                app:logWarning( "Can not find exif metadata table in preferences for id: " .. str:to ( id ) )
-                break
-            end
-            
-            if not filter or Common.isToShow( t, filter ) then
-                if tbl[id] == nil then
-                    -- dbg( #keys, "id", id )
-                    keys[#keys + 1] = id
-                    tbl[id] = t
-                else
-                    error( "cant be more than one table for same ID" )
-                end
-            -- else - no longer bothering to keep stuff not being shown.
-            end
-        until true
-    end
-
-    table.sort( keys ) -- always sorted first by ID
-            
-    if sortField == 'id' then
-        -- done
-    elseif sortField == 'encounters' then
-        Common._sortByEncounters( keys, tbl )
-    elseif sortField == 'name' then
-        Common._sortByName( keys, tbl )
-    elseif sortField == 'include' then
-        local newKeys = {}
-        for i, id in ipairs( keys ) do
-            if tbl[id].include then
-                newKeys[#newKeys + 1] = id
-            end
-        end
-        for i, id in ipairs( keys ) do
-            if not tbl[id].include then
-                newKeys[#newKeys + 1] = id
-            end
-        end
-        keys = newKeys
-    elseif sortField == 'hide' then
-        local newKeys = {}
-        for i, id in ipairs( keys ) do
-            if tbl[id].hide then
-                newKeys[#newKeys + 1] = id
-            end
-        end
-        for i, id in ipairs( keys ) do
-            if not tbl[id].hide then
-                newKeys[#newKeys + 1] = id
-            end
-        end
-        keys = newKeys
-    else
-        error("sort order not implemented" )
-    end
-    
-    
-    local index = 0
-    
-    return function()
-        index = index + 1
-        local key = keys[index]
-        if key ~= nil then
-            --assert( tbl[key], "no tbl for key: " .. key )
-            --assert( tbl[key].id, "no tbl id for key: " .. key )
-            --assert( tbl[key].id == key, str:fmt( "key/id mismatch, index: ^1, key: ^2, tbl-id: ^3", index, key, tbl[key].id ) )
-            return key, tbl[key]
-        else
-            return nil, nil
-        end
-    end
-
-end
-
-
-
---- Saves new exif table in preferences.
---
---  @param      id      (string, required) item id.
---  @param      t       can be an entire table (in case of new metadata), or just selected fields for setting (make sure base table already exists).
---
---  @usage      presently only being used for initial storage of whole table (less the 'new' field which is set further down the road).
---
-function Common.setExifPrefTable( id, t )
-
-    app:setGlobalPref( "{emid}_" .. id, true )
-    for k, v in pairs( t ) do
-        app:setGlobalPref( "{em}_" .. id .. '_' .. k, v )
-    end
-
-end
-
-
-
---  *** save for posterity: not presently used - updates are field-wise.
---  Updates specified fields in existing pref table.
---
---  @param      id      (string, required) item id.
---  @param      t       can be an entire table (in case of new metadata), or just selected fields for setting (make sure base table already exists).
---
---  @usage      t can be an entire table, or just selected fields for updating (make sure base table already exists).
---
-function Common.updateExifPrefTable( id, t )
-    for k, v in pairs( t ) do
-        Common.updateExifPrefField( id, k, v )
-    end  
-end
-
-
-
---- Gets entire exif table from preferences.
---
---  @param      id      (string, required) item id.
---
---  @usage      Presently only called by sorted-pairs iterator.
---
---  @return     t       whole metadata item table, or nil if none corresponds to specified id.
---
-function Common.getExifPrefTable( id )
-
-    local t = {}
-
-    local exists = app:getGlobalPref( "{emid}_" .. id )
-    if exists then
-        t.id = id -- id in prefs is now boolean.
-        t.include = app:getGlobalPref( "{em}_" .. id .. '_include' )
-        t.encounters = app:getGlobalPref( "{em}_" .. id .. '_encounters' )
-        t.prev = app:getGlobalPref( "{em}_" .. id .. '_prev' )
-        t.name = app:getGlobalPref( "{em}_" .. id .. '_name' )
-        t.hide = app:getGlobalPref( "{em}_" .. id .. '_hide' )
-        t.new = app:getGlobalPref( "{em}_" .. id .. '_new' )
-    else
-        return nil
-    end
-
-    return t
-
-end
-
-
-
---- Get one field of exif table from preferences.
---
---  @param      id      (string, required) item id.
---  @param      fld     (string, required) fld to get.
---
---  @usage      Its fast to get fields.
---
-function Common.getExifPrefField( id, fld )
-    return app:getGlobalPref( "{em}_" .. id .. '_' .. fld )
-end
-
-
-
---- Uupdate one field of existing exif table in preferences.
---
---  @param      id      (string, required) item id.
---  @param      fld     (string, required) fld to set.
---  @param      val     (any, required) value to set - type preserved in prefs.
---
---  @usage      Use for setting one or two fields, otherwise prefer save-exif-pref-table - either can be used for updating pre-existing table.
---  @usage      Because setting is so much more time consuming than getting, it pays to get previous field value and make sure its changed.
---
-function Common.updateExifPrefField( id, fld, val )
-    local nm = "{em}_" .. id .. '_' .. fld
-    local prev = app:getGlobalPref( nm )
-    if prev ~= val then
-        app:setGlobalPref( nm, val )
-    end
-end
-
-
-
---- Set one field of existing exif table in preferences.
---
---  @param      id      (string, required) item id.
---  @param      fld     (string, required) fld to set.
---  @param      val     (any, required) value to set - type preserved in prefs.
---
---  @usage      Previous value doesnt matter.
---  @usage      Because setting is so much more time consuming than getting, it pays to get previous field value and make sure its changed.
---              <br>this method for case when that has already been assured externally.
---
-function Common.setExifPrefField( id, fld, val )
-    local nm = "{em}_" .. id .. '_' .. fld
-    app:setGlobalPref( nm, val )
-end
-
-
-
---- Mark and/or clear new flag for all exif meta.
---
---  @usage      slowish at first, but will be fast after a while when no new items are being found.
---
-function Common.markNew( new )
-
-    for id, t in Common.sortedPairs() do
-        assert( id == t.id, "id mismatch" )
-
-        if new[id] then
-            Common.updateExifPrefField( id, 'new', true )
-        else
-            Common.updateExifPrefField( id, 'new', false )
-        end
-        
-    end
-end
 
 
 
@@ -513,29 +195,36 @@ function Common._processExifTable( photo, exifTbl, call, new ) -- ###3 raw-meta?
     
     local latitudeStr = exifTbl.GPS_GPSLatitude
     local longitudeStr = exifTbl.GPS_GPSLongitude 
+    local souOrig = photo:getRawMetadata("gps")
     if latitudeStr and longitudeStr then            
       local sou = { latitude = Common._rozeberSouradnici(latitudeStr[2]),
                     longitude  = Common._rozeberSouradnici(longitudeStr[2])
                   }
        app:logInfo( str:fmt( "   ... souradnice: lat=^1  lon=^2", sou.latitude, sou.longitude ))
 
-  --      app:logInfo("xxx")       
-       local souOrig = photo:getRawMetadata("gps")
---        app:logInfo("yyy " .. str:to( souOrig ) )       
-       
        if not souOrig then 
          app:logInfo( str:fmt( "   ... souradnice se nastavuji NIC ==> [^3 , ^4] ", sou.latitude, sou.longitude ))           
          photo:setRawMetadata("gps", sou)
+         call.nNastavujeSe = call.nNastavujeSe + 1           
        elseif     math.abs(souOrig.latitude  - sou.latitude) < 0.000000001 
           and math.abs(souOrig.longitude - sou.longitude) < 0.000000001  then
-         app:logInfo( str:fmt( "   ... souradnice jsou aktualizovane" ))           
+         app:logInfo( str:fmt( "   ... souradnice jsou aktualizovane" ))          
+         call.nAktualni = call.nAktualni + 1 
        else
-         app:logInfo( str:fmt( "   ... souradnice se nastavuji [^1 , ^2] ==> [^3 , ^4] ", souOrig.latitude, souOrig.longitude, sou.latitude, sou.longitude ))           
+         app:logInfo( str:fmt( "   ... souradnice se nastavuji [^1 , ^2] ==> [^3 , ^4] ", souOrig.latitude, souOrig.longitude, sou.latitude, sou.longitude ))
          photo:setRawMetadata("gps", sou)
+         call.nPrepisujeSe = call.nPrepisujeSe + 1           
        end  
           
     else
-       app:logInfo( str:fmt( "   ... fotka neobsahuje souradnice" ))           
+       if souOrig then
+         app:logInfo( str:fmt( "   ... fotka neobsahuje souradnice, ale katalog jo" ))
+         call.nJenKatalog = call.nJenKatalog + 1           
+       else    
+         app:logInfo( str:fmt( "   ... fotka neobsahuje souradnice a katalog take ne" ))
+         call.nNicNic = call.nNicNic + 1           
+       end  
+                  
     end
 end
 
