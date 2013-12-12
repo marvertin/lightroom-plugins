@@ -206,8 +206,8 @@ function Common._processExifTable( photo, exifTbl, call, new ) -- ###3 raw-meta?
          app:logInfo( str:fmt( "   ... souradnice se nastavuji NIC ==> [^3 , ^4] ", sou.latitude, sou.longitude ))           
          photo:setRawMetadata("gps", sou)
          call.nNastavujeSe = call.nNastavujeSe + 1           
-       elseif     math.abs(souOrig.latitude  - sou.latitude) < 0.000000001 
-          and math.abs(souOrig.longitude - sou.longitude) < 0.000000001  then
+       elseif     math.abs(souOrig.latitude  - sou.latitude) < 0.00001 
+          and math.abs(souOrig.longitude - sou.longitude)    < 0.00001  then
          app:logInfo( str:fmt( "   ... souradnice jsou aktualizovane" ))          
          call.nAktualni = call.nAktualni + 1 
        else
