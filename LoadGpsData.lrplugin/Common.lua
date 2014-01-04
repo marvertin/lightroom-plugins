@@ -194,7 +194,49 @@ end
 function Common._processExifTable( photo, exifTbl, call, new ) -- ###3 raw-meta?
     
     local latitudeStr = exifTbl.GPS_GPSLatitude
-    local longitudeStr = exifTbl.GPS_GPSLongitude 
+    local longitudeStr = exifTbl.GPS_GPSLongitude
+
+     for klic, hodnota in pairs( exifTbl ) do
+      app:logInfo(klic)
+     end
+
+    local city = nil
+    local sublocation = nil
+    local country = nil
+    local stateProvince = nil
+    
+    if exifTbl.IPTC_City then
+      city =  exifTbl.IPTC_City[2]
+    end
+    if exifTbl.IPTC_Sublocation then
+      sublocation = exifTbl.IPTC_Sublocation[2]
+    end
+    if exifTbl.IPTC_CountryPrimaryLocationName then
+      country = exifTbl.IPTC_CountryPrimaryLocationName[2]
+    end
+    if exifTbl.IPTC_ProvinceState then
+      stateProvince = exifTbl.IPTC_ProvinceState[2]
+    end
+    
+
+--     for klic, hodnota in pairs( city ) do
+--      app:logInfo(klic)
+--     end
+    
+--    LrDialogs.message("JEDU5 (" .. city .. ")");
+--    LrDialogs.message("JEDU5 (" .. sublocation .. ")");
+--    LrDialogs.message("JEDU5 (" .. country .. ")");
+    
+    local sublocationOrig = photo:getFormattedMetadata("location");
+    local cityOrig = photo:getFormattedMetadata("city");
+    local stateProvinceOrig = photo:getFormattedMetadata("stateProvince");
+    local countryOrig = photo:getFormattedMetadata("country");
+     LrDialogs.message(str:fmt("V KATALOGU: ^1 - ^2 - ^3 - ^4", sublocationOrig, cityOrig, stateProvinceOrig, countryOrig ))
+     LrDialogs.message(str:fmt("V SOUBORU: ^1 - ^2 - ^3 - ^4", sublocation, city, stateProvince, country ))
+
+--    LrDialogs.message("JEDU3 (" .. location .. ")");
+--    app:logInfo( str:fmt("XXXX: ^1", exifTbl)); 
+    --print (exifTbl);
     local souOrig = photo:getRawMetadata("gps")
     if latitudeStr and longitudeStr then            
       local sou = { latitude = Common._rozeberSouradnici(latitudeStr[2]),
